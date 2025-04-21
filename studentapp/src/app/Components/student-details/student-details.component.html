@@ -1,0 +1,263 @@
+<div class="container-fluid">
+  <div class="row p-2 bg-info">
+    <div class="col-6">
+      <h3>Student Details </h3>
+    </div>
+
+    <div class="col-6 text-end">
+      <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#exampleModal"
+        (click)="openModel()">Add Students</button>
+
+
+    </div>
+  </div>
+  @if(students && students.length!=0){
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>
+
+          <input [(ngModel)]="searchName" type="text" placeholder="Search by Name" />
+        </th>
+
+
+        <th>
+          <!-- <input [(ngModel)]="searchDOB" type="text" placeholder="Search by DOB" /> -->
+
+        </th>
+        <th>
+          <input [(ngModel)]="searchEmail" type="text" placeholder="Search by Email" />
+
+        </th>
+        <th class="text-center"> <button (click)="onSearch()">Search</button></th>
+      </tr>
+      <tr>
+        <th>
+          Student Name
+        </th>
+
+
+        <th>
+          Date of Birth
+        </th>
+        <th>
+          Email
+        </th>
+        <th>
+          Addresses
+        </th>
+        <th class="text-center">Status</th>
+      </tr>
+
+    </thead>
+    <tbody>@for(student of students;track $index) {<tr>
+        <td>{{student.firstName}}{{student.lastName}}</td>
+
+
+        <td>{{student.dateOfBirth}}</td>
+        <td>{{student.email}}</td>
+        <td>
+          <ul>
+            <li *ngFor="let addr of student.addresses">
+              {{ addr.addressline1 }}, {{ addr.city }}, {{ addr.state }} ({{ addr.country.countryName }})
+            </li>
+          </ul>
+        </td>
+        <!-- (click)="OnDelete(student.id)"   -->
+        <td class="text-center">
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal"
+            (click)="OnEdit(student.studentId)">Edit</button>
+          <button class="btn btn-danger" (click)="deleteStudent(student.studentId)">Delete</button>
+        </td>
+      </tr>}
+    </tbody>
+  </table>}
+  @else{
+  <h5>Student not found</h5>
+  } 
+  
+  
+  <div class="pagination">
+    <!-- <button (click)="prevPage()"  [disabled]="pageNumber === 1">Previous</button>
+    <span>Page {{ pageNumber }} of {{ getTotalPages()}}</span>
+    <button (click)="onPageChange(pageNumber + 1)" [disabled]="pageNumber * pageSize >= totalCount">Next</button> -->
+
+
+
+    <button (click)="goToPage(pageNumber - 1)" [disabled]="pageNumber === 1">Previous</button>
+  Page {{ pageNumber }} of {{ totalPages }}
+  <button (click)="goToPage(pageNumber + 1)" [disabled]="pageNumber === totalPages">Next</button>
+
+
+
+  </div>
+  <!-- The Modal -->
+  <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+    [style]="{'display':ismodelshow()?'block':'none'}">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+
+          @if(isEditMode)
+          {<h4 class="modal-title fs-5" id="exampleModalLabel">Update Student Details</h4>
+          }
+          @else{<h4 class="modal-title fs-5" id="exampleModalLabel">Add Student Details</h4>}
+
+
+
+          <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="closeModel()"></button>
+        </div>
+        <!-- Modal body -->
+        <div class="modal-body">
+
+
+          <div  class="mb-3">
+            <label for="firstName" class="col-form-label"> First Name::
+           
+             
+              <input name="firstName" [(ngModel)]="student.firstName" required />
+            </label>
+
+          </div>
+          <div  class="mb-3">
+            <label class="col-form-label">
+              Last Name:
+              <input name="lastName" [(ngModel)]="student.lastName" required />
+            </label>
+          </div>
+          <div  class="mb-3">
+            <label class="col-form-label">
+              Email:
+              <input name="email" [(ngModel)]="student.email" required />
+            </label>
+          </div>
+          <div  class="mb-3">
+            <label class="col-form-label">
+              Date Of Birth:
+              <!-- <p-calendar [(ngModel)]="student.dateOfBirth" dateFormat="yy-mm-dd" showIcon="true"></p-calendar> -->
+
+              
+              <input type="date" id="dateOfBirth" [(ngModel)]="student.dateOfBirth" name="dateOfBirth" required
+                class="form-control">
+
+              <!-- <mat-form-field appearance="fill">
+
+                <input style="width: auto;height: auto;" matInput [matDatepicker]="picker"
+                  [(ngModel)]="student.dateOfBirth" [max]="maxDate" />
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+              </mat-form-field> -->
+              <!-- <input name="dateOfBirth" [(ngModel)]="student.dateOfBirth" required /> -->
+            </label>
+          </div>
+          <div  class="mb-3">
+            <label class="col-form-label"> Class:
+              <select id="classes" [(ngModel)]="selectedClassId" name="classes" required>
+                <option value="" disabled selected>Select Class</option>
+                <option *ngFor="let class of classes" [value]="class.id">
+                  {{ class.className }}
+                </option>
+              </select> </label>
+          </div>
+          <div class="tabs-container">
+            <ul class="tabs">
+              <li [class.active]="selectedTab === 'correspondance'" (click)="selectTab('correspondance')">
+                Correspondance</li>
+              <li [class.active]="selectedTab === 'permanent'" (click)="selectTab('permanent')">Permanent</li>
+              <li [class.active]="selectedTab === 'school'" (click)="selectTab('school')">School</li>
+
+            </ul>
+
+            <div *ngIf="selectedTab === 'correspondance'">
+              <h3>Correspondance Address</h3>
+              <input type="hidden" [(ngModel)]="correspondanceAddress.addressCategoryId" />
+              <input id="correspondanceAddressline1" placeholder="Address Line1" type="text"
+                [(ngModel)]="correspondanceAddress.addressline1" name="addressline1" required>
+              <input id="correspondanceAddressline2" placeholder="Address Line2" type="text"
+                [(ngModel)]="correspondanceAddress.addressline2" name="addressline2" required>
+              <input id="correspondanceAddressline3" placeholder="Address Line3" type="text"
+                [(ngModel)]="correspondanceAddress.addressline3" name="addressline3" required>
+              <input id="city" type="text" placeholder="City" [(ngModel)]="correspondanceAddress.city" name="city"
+                required>
+              <input placeholder="State" id="state" type="text" [(ngModel)]="correspondanceAddress.state" name="state"
+                required>
+              <select id="country" type="number" 
+                [(ngModel)]="correspondanceAddress.countryId" name="country" required>
+                <option value="0" disabled selected>Select Country</option>
+                <option *ngFor="let country of countries" [value]="country.id">
+                  {{ country.countryName }}
+                </option>
+              </select>
+              <input type="text" placeholder="Postal Code" id="postalcode"
+                [(ngModel)]="correspondanceAddress.postalCode" name="postalcode" required /><br />
+              <!-- <button (click)="addAddress('correspondance')">Add Correspondance Address</button> -->
+
+            </div>
+
+            <div *ngIf="selectedTab === 'permanent'">
+              <h3>Permanent Address</h3>
+              <input type="hidden" [(ngModel)]="permanentAddress.addressCategoryId" />
+              <input id="address" placeholder="Address Line1" type="text" [(ngModel)]="permanentAddress.addressline1"
+                name="addressline1" required>
+              <input id="address" placeholder="Address Line2" type="text" [(ngModel)]="permanentAddress.addressline2"
+                name="addressline2" required>
+              <input id="address" placeholder="Address Line3" type="text" [(ngModel)]="permanentAddress.addressline3"
+                name="addressline3" required>
+              <input id="city" type="text" placeholder="City" [(ngModel)]="permanentAddress.city" name="city" required>
+              <input placeholder="State" id="state" type="text" [(ngModel)]="permanentAddress.state" name="state"
+                required>
+
+              <select id="country" [(ngModel)]="permanentAddress.countryId" name="country" required>
+                <option value="0" disabled selected>Select Country</option>
+                <option *ngFor="let country of countries" [value]="country.id">
+                  {{ country.countryName }}
+                </option>
+              </select>
+              <input type="text" placeholder="Postal Code" id="postalcode" [(ngModel)]="permanentAddress.postalCode"
+                name="postalcode" required /><br />
+              <!-- <button (click)="addAddress('permanent')">Add Permanent Address</button> -->
+            </div>
+            <div *ngIf="selectedTab === 'school'">
+              <h3>School Address</h3>
+              <input type="hidden" [(ngModel)]="schoolAddress.addressCategoryId" />
+              <input id="address" placeholder="Address Line1" type="text" [(ngModel)]="schoolAddress.addressline1"
+                name="addressline1" required>
+              <input id="address" placeholder="Address Line2" type="text" [(ngModel)]="schoolAddress.addressline2"
+                name="addressline2" required>
+              <input id="address" placeholder="Address Line3" type="text" [(ngModel)]="schoolAddress.addressline3"
+                name="addressline3" required>
+              <input id="city" type="text" placeholder="City" [(ngModel)]="schoolAddress.city" name="city" required>
+              <input placeholder="State" id="state" type="text" [(ngModel)]="schoolAddress.state" name="state" required>
+
+              <select id="country" type="number" [(ngModel)]="schoolAddress.countryId" name="country" required>
+                <option value="0" disabled selected>Select Country</option>
+                <option *ngFor="let country of countries" [value]="country.id">
+                  {{ country.countryName }}
+                </option>
+              </select>
+              <input type="text" placeholder="Postal Code" id="postalcode" [(ngModel)]="schoolAddress.postalCode"
+                name="postalcode" required /><br />
+              <!-- <button (click)="addAddress('school')">Add School Address</button> -->
+
+            </div>
+
+
+
+            <!-- Repeat similarly for Return and Payee Tabs -->
+          </div>
+        </div>
+        <!-- Modal footer -->
+        <div class="modal-footer">
+          @if(isEditMode){
+          <button type="submit" class="btn btn-primary" data-bs-dismiss="modal" (click)="onsubmit()">Update</button>
+
+          }@else{
+          <button type="submit" class="btn btn-primary" data-bs-dismiss="modal" (click)="onsubmit()">Save</button>
+          }
+
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal" (click)="closeModel()">Close</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
