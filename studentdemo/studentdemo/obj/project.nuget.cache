@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Gh23ieTfZ8U=",
+  "dgSpecHash": "FHkRh4gjZPQ=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Vineforce\\Downloads\\New folder\\New folder\\studentdemo\\studentdemo\\studentdemo.csproj",
+  "projectFilePath": "C:\\Users\\Vineforce\\source\\repos\\StudentCrud\\studentdemo\\studentdemo\\studentdemo.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Vineforce\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\Vineforce\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",

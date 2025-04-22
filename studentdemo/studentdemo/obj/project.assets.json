@@ -5394,11 +5394,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Vineforce\\Downloads\\New folder\\New folder\\studentdemo\\studentdemo\\studentdemo.csproj",
+      "projectUniqueName": "C:\\Users\\Vineforce\\source\\repos\\StudentCrud\\studentdemo\\studentdemo\\studentdemo.csproj",
       "projectName": "studentdemo",
-      "projectPath": "C:\\Users\\Vineforce\\Downloads\\New folder\\New folder\\studentdemo\\studentdemo\\studentdemo.csproj",
+      "projectPath": "C:\\Users\\Vineforce\\source\\repos\\StudentCrud\\studentdemo\\studentdemo\\studentdemo.csproj",
       "packagesPath": "C:\\Users\\Vineforce\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Vineforce\\Downloads\\New folder\\New folder\\studentdemo\\studentdemo\\obj\\",
+      "outputPath": "C:\\Users\\Vineforce\\source\\repos\\StudentCrud\\studentdemo\\studentdemo\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
