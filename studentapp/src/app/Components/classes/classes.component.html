@@ -1,1 +1,59 @@
-<p>classes works!</p>
+<!-- *ngIf="showForm" -->
+<div class="container mt-5" *ngIf="showForm">
+    <div class="row justify-content-center">
+      <div class="col-md-6 col-lg-5">
+        <form (ngSubmit)="submit()" #classForm="ngForm" novalidate>
+          <div class="card shadow rounded-4 p-4">
+            <h5 class="mb-4 text-center">Add New Class</h5>
+  
+            <div class="mb-3">
+              <label for="className" class="form-label">Class Name</label>
+              <input
+                type="text"
+                id="className"
+                class="form-control"
+                name="className"
+                [(ngModel)]="studentClass.className"
+                required
+                #className="ngModel" minlength="3"
+                maxlength="15"
+                pattern="^[a-zA-Z0-9]+$"
+              />
+              
+            <div *ngIf="className.touched && className.invalid" class="text-danger">
+              <div *ngIf="className.errors?.['minlength']">
+                Class name must be at least 3 characters.
+              </div>
+              <div *ngIf="className.errors?.['maxlength']">
+                Class name must be at most 15 characters.
+              </div>
+              <div *ngIf="className.errors?.['required']">Class name is required.</div>
+              <div *ngIf="className.errors?.['pattern']">
+                Only letters and spaces are allowed.
+              </div>
+            </div>
+            </div>  
+            <div class="d-flex gap-2">
+                <button
+                  type="submit"
+                  class="btn btn-primary px-4"
+                  [disabled]="classForm.invalid"
+                >
+                  Save
+                </button>
+               
+  <button
+  type="button"
+  class="btn btn-secondary w-50"
+  (click)="cancel()"
+>
+  Cancel
+</button>
+               
+              </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  

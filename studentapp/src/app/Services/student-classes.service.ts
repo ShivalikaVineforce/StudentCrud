@@ -17,6 +17,9 @@ export class StudentClassesService {
 
     return this.http.get<StudentClass[]>(this.apiUrl+'/GetClasses');
   }
+  createClass(cls: StudentClass): Observable<StudentClass> {
+    return this.http.post<StudentClass>(this.apiUrl+'/AddClasses' , cls);
+  }
 
 
 }

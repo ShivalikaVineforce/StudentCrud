@@ -4,41 +4,52 @@ import { AddressService } from '../../Services/address.service';
 import { CountryService } from '../../Services/country.service';
 import { StudentClassesService } from '../../Services/student-classes.service';
 import { StudentService } from '../../Services/student.service';
-import { CommonModule } from '@angular/common';
-import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { CommonModule, DatePipe } from '@angular/common';
+import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, NgForm, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { Student, StudentClass, StudentDto, Address, Country } from '../../Models/student.interface';
-import { StudentDetailsDto } from '../../Models/StudentClassDto.model';
+import { Student, StudentClass, Address, Country, AddressCategory } from '../../Models/student.interface';
+import { StudentDetailsDto, StudentSearch } from '../../Models/StudentClassDto.model';
+import { Router } from '@angular/router';
+import { AddresscategoryService } from '../../Services/addresscategory.service';
 
+import { firstValueFrom } from 'rxjs';
 @Component({
-    selector: 'app-student-details',
-    imports: [FormsModule, CommonModule, ReactiveFormsModule, CommonModule, HttpClientModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatDatepickerModule,
-        MatNativeDateModule], providers: [
-        StudentClassesService,
-        HttpClient, CountryService, AddressService, StudentService
+  selector: 'app-student-details',
+  imports: [FormsModule, CommonModule, ReactiveFormsModule, CommonModule, HttpClientModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatDatepickerModule,
+    MatNativeDateModule], providers: [DatePipe,
+      StudentClassesService, AddresscategoryService,
+      HttpClient, CountryService, AddressService, StudentService
     ],
-    templateUrl: './student-details.component.html',
-    styleUrl: './student-details.component.css'
+  templateUrl: './student-details.component.html',
+  styleUrl: './student-details.component.css'
 })
 export class StudentDetailsComponent implements OnInit {
+  studentClass: StudentClass = {
+    className: '',
+    id: 0,
+    students: []
+  };
+
+  sortColumn: string = ''; formattedDateOfBirth: string | null = null;
+  sortDirection: 'asc' | 'desc' = 'asc';
   classes: StudentClass[] = []; maxDate = new Date();
   addressCategories: any[] = [];
   selectedClassId: number = 0;
-  studentForm: FormGroup; isEditMode = false;
-  selectedaddressCategory: number = 0;
+  isEditMode = false;
+  selectedaddressCategory: number = 0; today: string = new Date().toISOString().split('T')[0];
   selectedTab: string = 'correspondance';
   student: Student = {
     studentId: 0,
     firstName: '',
     lastName: '',
     email: '',
-    dateOfBirth: '',
+    dateOfBirth: new Date(),
     classId: 0,
     class: {
       id: 1,
@@ -47,7 +58,7 @@ export class StudentDetailsComponent implements OnInit {
     },
     addresses: [],
   };
-  studentdb: StudentDto = new StudentDto();
+
   correspondanceAddress: Address = {
     id: 0,
     addressline1: '',
@@ -62,7 +73,7 @@ export class StudentDetailsComponent implements OnInit {
       firstName: '',
       lastName: '',
       email: '',
-      dateOfBirth: '',
+      dateOfBirth: new Date(),
       classId: 0,
       class: {
         id: 0,
@@ -98,7 +109,7 @@ export class StudentDetailsComponent implements OnInit {
       firstName: '',
       lastName: '',
       email: '',
-      dateOfBirth: '',
+      dateOfBirth: new Date(),
       classId: 0,
       class: {
         id: 0,
@@ -134,7 +145,7 @@ export class StudentDetailsComponent implements OnInit {
       firstName: '',
       lastName: '',
       email: '',
-      dateOfBirth: '',
+      dateOfBirth: new Date(),
       classId: 0,
       class: {
         id: 0,
@@ -157,46 +168,40 @@ export class StudentDetailsComponent implements OnInit {
         []
     }
   };
-  //students:StudentDetailsDto[]=[];
-  students: Student[] = [];
+  students: StudentSearch[] = [];
   address: any;
   studentforUpdate!: StudentDetailsDto;
-
   searchName: string = '';
   searchDOB: string = '';
   searchClass: string = '';
   searchEmail: string = '';
-
-
   countries: Country[] = []; isOldAddressExist: boolean = false;
   totalCount = 0;
-  totalPages=0;
-  pageSize = 10; // Number of items per page
+  totalPages = 0;
+  pageSize = 10;
   pageNumber = 1;
-
   searchTerm = '';
   currentPage = 1;
-  
 
-  constructor(private fb: FormBuilder, private http: HttpClient, private studentClassService: StudentClassesService,
+  addressCategory: AddressCategory = {
+    addressCategoryName: '',
+    id: 0,
+    addresses: []
+  };
+  constructor(private service: AddresscategoryService, private datePipe: DatePipe, private router: Router, private fb: FormBuilder, private http: HttpClient, private studentClassService: StudentClassesService,
     private studentService: StudentService, private countryService: CountryService, private addressService: AddressService) {
-    this.studentForm = this.fb.group({
-      firstName: [''],
-      lastName: [''],
-      email: [''],
-      dateOfBirth: new FormControl<Date | null>(null),
-      classId: [0],
-      addresses: this.fb.array([this.createAddressFormGroup()])
 
-      // add your controls here
-    });
   }
   onSearch(): void {
     this.currentPage = 1;
     this.pageNumber = 1;
     this.loadStudents();
   }
-
+  formatDateForInput(date: Date | string | null): string | null {
+    if (!date) return null;
+    const d = new Date(date);
+    return d.toISOString().split('T')[0];
+  }
   onPageChange(page: number): void {
     this.currentPage = page;
     this.loadStudents();
@@ -206,12 +211,10 @@ export class StudentDetailsComponent implements OnInit {
     this.loadStudents();
   }
   loadStudents(): void {
-    this.studentService.getStudents(this.searchName, this.searchEmail, this.pageNumber, this.pageSize)
+    debugger;
+    this.studentService.getStudents(this.searchTerm, this.pageNumber, this.pageSize, this.sortColumn, this.sortDirection)
       .subscribe(data => {
-        debugger;
-       
         this.students = data.students;
-        
         this.totalCount = data.totalCount;
         this.totalPages = Math.ceil(this.totalCount / this.pageSize);
       });
@@ -222,17 +225,14 @@ export class StudentDetailsComponent implements OnInit {
       this.loadStudents();
     }
   }
-  
+
   ngOnInit(): void {
-    this.setFormState();
+
     this.countryService.getCountries().subscribe((data) => {
       this.countries = data;
     });
-    //this.getAllStudents();
-    this.loadStudents();
-   
 
-    // Fetch available classes and address categories from the backend
+    this.loadStudents();
     this.studentClassService.getStudentClasses().subscribe(data => {
 
       this.classes = data;
@@ -241,154 +241,70 @@ export class StudentDetailsComponent implements OnInit {
 
       this.addressCategories = data;
     });
-    // this.addressCategories$ = this.http.get<any[]>('/api/addresscategories');
-  } 
-  // getAllStudents() {
-  //   this.studentService.getStudents().subscribe((data) => {
+  }
 
-
-  //     this.students = data;
-  //     console.log(data);
-  //     this.setFormState();
-  //   });
-  // }
   @ViewChild('exampleModal') model: ElementRef | undefined;
+  @ViewChild('addressCategoryModal') addressCategoryModal: ElementRef | undefined;
+  @ViewChild('classModal') classModal: ElementRef | undefined;
   ismodelshow = signal(false);
+
+  openAddressModel() {
+    if (this.addressCategoryModal != null) { this.addressCategoryModal.nativeElement.style.display = 'block'; }
+  }
+  closeAddressModel(form: NgForm) {
+    form.resetForm();
+    this.resetAddressCategory();
+
+  }
+
+  openClassModel() {
+    if (this.classModal != null) { this.classModal.nativeElement.style.display = 'block'; }
+  }
+  closeClassModel(form: NgForm) {
+    debugger;
+    form.resetForm();
+    this.resetClasses();
+  }
   openModel() {
-    this.student={
-      studentId: 0,
-      firstName: '',
-      lastName: '',
-      email: '',
-      dateOfBirth: '',
-      classId: 0,
-      class: {
-        id: 1,
-        className: '',
-        students: []
-      },
-      addresses: [],
-    };;
+    this.InitialControl();
     this.isEditMode = false;
-  
     this.ismodelshow = signal(true);
     const serviceModel = document.getElementById('exampleModal');
     if (serviceModel != null) {
-
       serviceModel.style.display = 'block';
     }
   }
   closeModel() {
-    this.setFormState();
     if (this.model != null) { this.model.nativeElement.style.display = 'none'; }
-
   }
   getTotalPages(): number {
     return Math.ceil(this.totalCount / this.pageSize);
   }
 
   OnEdit(studentid: any) {
-    //console.log (student);
     this.openModel();
     this.isEditMode = true;
-   
+
     this.studentService.getStudentsForEdit(studentid).subscribe((data) => {
-     
       console.log(data);
       this.student = data[0].student;
+      this.formattedDateOfBirth = this.formatDateForInput(this.student.dateOfBirth); // string for input
+
+      // On form submit
+      this.student.dateOfBirth = new Date(this.formattedDateOfBirth!);
       let c = data[0].addresses.length;
       for (let address of data[0].addresses) {
         if (address.addressCategoryId == 1) {
           this.correspondanceAddress = address;
-          //this.correspondanceAddress.
         }
         if (address.addressCategoryId == 2)
           this.permanentAddress = address;
         if (address.addressCategoryId == 3)
           this.schoolAddress = address;
-
       }
-
       this.selectedClassId = (data[0].student.classId);
-      console.log(data);
-      this.setFormState();
-    });
-
-  }
-  // onCountryIdChange(value: any) {
-  //   //if(type=='correspondance')
-  //   // this.schoolAddress.countryId = parseInt(value, 10);
-  //   //this.permanentAddress.countryId = parseInt(value, 10);
-    
-  //   this.correspondanceAddress.countryId = parseInt(value, 10);
-  // }
-
-
-  setFormState() {
-    //this.isEditMode=false;
-    this.correspondanceAddress.addressCategoryId = 1;
-    this.permanentAddress.addressCategoryId = 2;
-    this.schoolAddress.addressCategoryId = 3;
-    this.studentForm = this.fb.group({
-      firstName: ['', Validators.required],
-      lastName: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
-      dateOfBirth: new FormControl<Date | null>(null),
-      classId: [0, Validators.required],
-      addresses: this.fb.array([this.createAddressFormGroup()]) // Address FormArray
     });
   }
-  onaddressCategorySelect(id: string, isChecked: boolean): void {
-    
-  }
-
-  selectTab(tab: string): void {
-    this.selectedTab = tab;
-  }
-  // addAddress(addressType: string) {
-
-  //   const newAddress :Address= {
-  //     id: 0,
-  //     city: '',
-  //     addressline1: '',
-  //     addressline2: '',
-  //     addressline3: '',
-  //     state: '',
-  //     postalCode: '',
-  //     studentId: 0,
-  //     student: '',
-  //     countryId: 0,
-  //     country: Country{
-  //       id= 0,
-  // name= '',
-  // addresses= [''],
-  //     },
-  //     addressCategoryId: 0,
-  //     addressCategory: AddressCategory
-  //   };
-  //   if(addressType=="correspondance")
-  //   newAddress.addressCategoryId = 1;
-  //   else if(addressType=="permanent")
-  //     newAddress.addressCategoryId = 2;
-  //   else if(addressType=="school")
-  //     newAddress.addressCategoryId = 3;
-  //   if (addressType === 'correspondance') {
-  //     this.address.addressCategoryId= 1;
-  //   } else if (addressType === 'permanent') {
-  //     this.address.addressCategoryId= 2;
-  //   } else if (addressType === 'school') {
-  //     this.address.addressCategoryId= 3;
-  //   } 
-
-  //   this.isOldAddressExist = true;
-  //   this.student.address.push({ ...this.address }); // Add current package to the shipment's packages array
-  //   this.address : Address; // Reset the package input fields
-
-  // }
-
-
-  onAddressCategoryChange(event: Event): void { }
- 
   getstudents() {
     this.studentService.getPaginatedStudents(this.pageNumber, this.pageSize)
       .subscribe(data => {
@@ -397,128 +313,240 @@ export class StudentDetailsComponent implements OnInit {
         this.totalCount = data.TotalCount;
 
       });
-
-    this.setFormState();
-
-  }
-  // Helper to create a new address form group
-  createAddressFormGroup(): FormGroup {
-    return this.fb.group({
-      addressline1: ['', Validators.required],
-      addressline2: [''],
-      addressline3: [''],
-      city: ['', Validators.required],
-      state: ['', Validators.required],
-      country: ['', Validators.required],
-      addressCategoryId: [null, Validators.required],
-      dateofBirth: ['', Validators.required],
-      postalCode: ['', Validators.required],
-      email: ['', Validators.required]
-
-    });
-  }
-
-  // Getter for the address array
-  get addresses(): FormArray {
-    return this.studentForm.get('addresses') as FormArray;
   }
   deleteStudent(studentId: number) {
-    this.isEditMode=false;
-    const isconfirm = confirm("Are you sure u want to delete the service");
+    this.isEditMode = false;
+    const isconfirm = confirm("Are you sure u want to delete student");
     if (isconfirm) {
-    this.studentService.deleteStudent(studentId).subscribe({
-      next: () => {
-        alert("Student deleted successfully");
-        this.loadStudents();
+      this.studentService.deleteStudent(studentId).subscribe({
+        next: () => {
+          alert("Student deleted successfully");
+          this.loadStudents();
+        },
+        error: (err) => {
+          alert("Failed to delete student");
+          console.error("Failed to delete student", err);
+        }
+      });
+    }
+  }
 
-        // Refresh student list or navigate away
-      },
-      error: (err) => {
-        alert("Failed to delete student");
-        console.error("Failed to delete student", err);
-      }
-    });
-  }}
+  @ViewChild('dobInputRef') dobInputElement!: ElementRef;
 
-  onsubmit() {
-   
+  async onsubmit(form: NgForm) {
+debugger;
 
+    if (!this.formattedDateOfBirth) {
+      setTimeout(() => {
+        this.dobInputElement.nativeElement.focus();
+      }, 0);
+      alert('Student Date of birth cannot be empty');
+      return;
+    }
+
+    this.student.dateOfBirth = new Date(this.formattedDateOfBirth!);   
     this.student.classId = Number(this.selectedClassId);
-    // this.studentdb.student=this.student;  
     this.student.addresses = [];
-    const dobRaw = this.student.dateOfBirth;
-    if (this.correspondanceAddress != null && Number(this.correspondanceAddress.countryId) != 0) {
+
+    if (this.correspondanceAddress && Number(this.correspondanceAddress.countryId) !== 0) {
       this.correspondanceAddress.countryId = Number(this.correspondanceAddress.countryId);
+      this.correspondanceAddress.addressCategoryId = 1;
       this.student.addresses.push(this.correspondanceAddress);
     }
-    if (this.permanentAddress != null && Number(this.permanentAddress.countryId) != 0) {
+   
+
+    if (this.permanentAddress && Number(this.permanentAddress.countryId) !== 0) {
       this.permanentAddress.countryId = Number(this.permanentAddress.countryId);
+      this.permanentAddress.addressCategoryId = 2;
       this.student.addresses.push(this.permanentAddress);
     }
 
-    if (this.schoolAddress != null && Number(this.schoolAddress.countryId) != 0) {
+    if (this.schoolAddress && Number(this.schoolAddress.countryId) !== 0) {
       this.schoolAddress.countryId = Number(this.schoolAddress.countryId);
+      this.schoolAddress.addressCategoryId = 2;
       this.student.addresses.push(this.schoolAddress);
     }
 
+    const nonEmptyAddresses = this.student.addresses.filter(addr => !this.isAddressEmpty(addr));
 
-    // Format as ISO without time ;(e.g., '1990-05-01')
-    // const dob = dobRaw instanceof Date
-    //   ? dobRaw.toISOString().substring(0, 10)
-    //   : dobRaw;
-
-
-    console.log(JSON.stringify(this.student));
-
-
-    if (this.isEditMode) {
-
-      this.studentService.updateStudent(this.student).subscribe({
-        next: (response) => {
-          alert('Student updated successfully:');
-          console.log('Student created successfully:', response);
-          //this.getAllStudents();
-          this.loadStudents();
-          // You can reset form, navigate or show a success message
-        },
-        error: (err) => {
-          alert('Error updating student:');
-          console.error('Error creating student:', err);
-        }
-      });
+    if (nonEmptyAddresses.length === 0) {
+      alert('Please enter at least one valid address.');
+      return;
     }
-    else {
 
+    try {
+      if (this.isEditMode) {
+        await firstValueFrom(this.studentService.updateStudent(this.student));
+        alert('Student updated successfully');
+      } else {
+        await firstValueFrom(this.studentService.addStudent(this.student));
+        alert('Student created successfully');
+      }
 
+      const closeBtn = document.getElementById('closeStudentBtn');
+      if (closeBtn) closeBtn.click();
+      this.InitialControl();
+      this.sortDirection = 'desc';
+      this.loadStudents();
 
-      this.studentService.addStudent(this.student).subscribe({
-        next: (response) => {
-          alert('Student created successfully:');
-          console.log('Student created successfully:', response);
-          this.loadStudents();
-          this.student={
-            studentId: 0,
-            firstName: '',
-            lastName: '',
-            email: '',
-            dateOfBirth: '',
-            classId: 0,
-            class: {
-              id: 1,
-              className: '',
-              students: []
-            },
-            addresses: [],
-          };;
-          // You can reset form, navigate or show a success message
-        },
-        error: (err) => {
-          alert('Error creating student:');
-          console.error('Error creating student:', err);
-        }
-      });
+    }
+    catch (error: any) {
+      this.handleApiError(error, this.isEditMode ? 'Error updating student' : 'Error creating student');
+      const backendMessage = error?.error?.message || 'Something went wrong. Please try again.';      
+      console.error(error);
     }
   }
 
+  isAddressEmpty(addr: any): boolean {
+    return !addr.line1 && !addr.line2 && !addr.city && !addr.state && !addr.country && !addr.postalCode;
+  }
 
+  sortData(column: string): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+    this.loadStudents();
+    this.students.sort((a: any, b: any) => {
+      const valueA = a[column]?.toString().toLowerCase() || '';
+      const valueB = b[column]?.toString().toLowerCase() || '';
+
+      if (valueA < valueB) return this.sortDirection === 'asc' ? -1 : 1;
+      if (valueA > valueB) return this.sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+  getSortIcon(column: string): string {
+    if (this.sortColumn !== column) return 'bi bi-arrow-down-up';
+    return this.sortDirection === 'asc' ? 'bi bi-arrow-down' : 'bi bi-arrow-up';
+  }
+
+  InitialControl() {
+    this.selectedClassId = 0;
+    this.searchTerm = '';
+
+    this.formattedDateOfBirth = '';
+    this.student = {
+      studentId: 0,
+      firstName: '',
+      lastName: '',
+      email: '',
+      dateOfBirth: null,
+      classId: 0,
+      class: {
+        id: 1,
+        className: '',
+        students: []
+      },
+      addresses: [],
+    };
+  }
+
+  AddAddressCategory() {
+    try {
+      this.service.AddAddressCategories(this.addressCategory).subscribe({
+        next: (res) => {
+          console.log('address Category created:', res);
+          alert('Address Category added successfully!');
+          this.resetAddressCategory(); // reset
+        },
+        error: (err) => {
+          console.error('API error:', err);
+          let userMessage = 'Something went wrong. Please try again.';
+          if (err.status === 400 || err.status === 500) {
+            userMessage = err.error?.message || userMessage;
+          }
+          alert(`Failed to Add Address Category: ${userMessage}`);
+        },
+      });
+
+    } catch (error: any) {
+      debugger;
+      this.handleApiError(error, 'Error creating Address Category');
+      const backendMessage = error?.error?.message || 'Something went wrong. Please try again.';
+    }
+  }
+  isMyClassAdded = false;
+  AddClasses() {
+    this.studentClassService.createClass(this.studentClass).subscribe({
+      next: (res) => {
+        alert('Class added successfully!');
+       
+        this.resetClasses(); 
+      },
+      error: (err) => {
+
+        let studentClassMessage = 'Something went wrong. Please try again.';
+        if (err.status === 400 || err.status === 500) {
+          studentClassMessage = err.error?.message || studentClassMessage;
+        }
+        alert(`Failed to Add Student Class : ${studentClassMessage}`);
+      },
+    });
+    const closeBtn = document.getElementById('closeClassBtn');
+    if (closeBtn) closeBtn.click();
+    this.resetClasses();
+  }
+  resetAddressCategory() {
+    this.addressCategory = {
+      addressCategoryName: '',
+      id: 0,
+      addresses: []
+    };
+  }
+  resetClasses() {
+    this.studentClass = {
+      className: '',
+      id: 0,
+      students: []
+    };
+  }
+
+  isFutureDate(dateString: string | null | undefined): boolean {
+    if (!dateString) return false;
+    const selectedDate = new Date(dateString);
+    const today = new Date();
+
+    // Strip time for accurate comparison
+    selectedDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    return selectedDate > today;
+  }
+
+
+  handleApiError(error: any, fallbackMessage: string) {
+    const message = error?.error?.message || fallbackMessage;
+    alert(message);
+    console.error('API Error:', error);
+  }
+
+  dobError: string | null = null; invalidDate = false;
+  validateDateOfBirth(value: string) {
+    this.dobError = null;
+
+    if (!this.formattedDateOfBirth) return;
+
+    const year = new Date(value).getFullYear();
+    this.invalidDate = year < 1900;
+    if (this.invalidDate) {
+      this.formattedDateOfBirth = ''; // optional: reset invalid date
+    }
+    // Check for special characters (allow only YYYY-MM-DD or similar digits and hyphens)
+    const datePattern = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/;
+    if (!datePattern.test(this.formattedDateOfBirth)) {
+      this.dobError = 'invalidChars';
+      return;
+    }
+
+    const inputDate = new Date(this.formattedDateOfBirth);
+    const today = new Date();
+
+    if (inputDate > today) {
+      this.dobError = 'future';
+    }
+  }
 }
+

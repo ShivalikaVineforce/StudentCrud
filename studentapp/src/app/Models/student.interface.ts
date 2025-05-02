@@ -37,14 +37,10 @@ export interface Student {
   firstName: string;
   lastName: string;
   email: string;
-  dateOfBirth: string;
+  dateOfBirth: Date|null;
   classId: number;
   class: StudentClass;
   addresses: Address[];
 }
-export class StudentDto {
-    // student:Student= new Student;
-    // address: Address[] = [];    
-   // address:AddressTab=new AddressTab;
+
   
-  }

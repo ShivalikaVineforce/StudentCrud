@@ -1,263 +1,612 @@
 <div class="container-fluid">
-  <div class="row p-2 bg-info">
-    <div class="col-6">
-      <h3>Student Details </h3>
+  <div class="container-fluid p-0 m-0" style="height: 100vh; display: flex; flex-direction: column;">
+    <!-- Header -->
+    <div class="card-header d-flex justify-content-between align-items-center bg-dark text-white">
+      <h3 class="mb-0">Student List</h3>
+
+      <div class="d-flex gap-2 flex-wrap justify-content-end">
+        <button class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#exampleModal"
+          (click)="openModel()">
+          <i class="bi bi-plus-lg me-1"></i> Add Student
+        </button>
+
+        <button class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#classModal"
+          (click)="openClassModel()">
+          <i class="bi bi-plus-lg me-1"></i> Add Class
+        </button>
+
+        <button class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#addressCategoryModal"
+          (click)="openAddressModel()">
+          <i class="bi bi-plus-lg me-1"></i> Add Address Category
+        </button>
+      </div>
     </div>
-
-    <div class="col-6 text-end">
-      <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#exampleModal"
-        (click)="openModel()">Add Students</button>
-
-
+    <div class="flex-grow-1 overflow-auto">
+      @if (students && students.length != 0) {
+      <div class="table-responsive">
+        <table class="table table-hover table-bordered table-striped align-middle mb-0">
+          <thead class="table-primary text-center">
+            <tr>
+              <th colspan="6"><input [(ngModel)]="searchTerm" type="text" class="form-control form-control-sm"
+                  (keyup.enter)="onSearch()" placeholder="Search by Name Or Email" /></th>
+              <th class="text-center"><button class="btn btn-sm btn-primary" (click)="onSearch()">Search</button></th>
+            </tr>
+            <tr>
+              <th>#</th>
+              <th (click)="sortData('firstName')">Student Name <i [class]="getSortIcon('firstName')"></i></th>
+              <th (click)="sortData('dateOfBirth')">Date of Birth <i [class]="getSortIcon('dateOfBirth')"></i></th>
+              <th (click)="sortData('email')">Email <i [class]="getSortIcon('email')"></i></th>
+              <th>Class</th>
+              <th>Addresses</th>
+              <th class="text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (student of students; track $index) {
+            <tr>
+              <td>{{ $index + 1 }}</td>
+              <td>{{ student.firstName }}{{ student.lastName }}</td>
+              <td>{{ student.dateOfBirth | date: 'dd-MM-yyyy'}}</td>
+              <td>{{ student.email }}</td>
+              <td>{{ student.className }}</td>
+              <td>
+                <ul class="mb-0 ps-3">
+                  <li *ngFor="let addr of student.addresses">
+                    {{ addr.addressCategoryName }} - {{ addr.addressline1 }}, {{ addr.city }}, {{ addr.state }} ({{
+                    addr.countryName }})
+                  </li>
+                </ul>
+              </td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal"
+                  data-bs-target="#exampleModal" (click)="OnEdit(student.studentId)">
+                  <i class="bi bi-pencil-square"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-outline-danger" (click)="deleteStudent(student.studentId)">
+                  <i class="bi bi-trash3"></i> Delete
+                </button>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      } @else {
+      <div class="p-3">
+        <h5 class="text-muted">No students found.</h5>
+      </div>
+      }
+    </div>
+    <div class="card-footer text-center py-2 bg-light">
+      <button class="btn btn-sm btn-outline-secondary me-2" (click)="goToPage(pageNumber - 1)"
+        [disabled]="pageNumber === 1">Previous</button>
+      Page {{ pageNumber }} of {{ totalPages }}
+      <button class="btn btn-sm btn-outline-secondary ms-2" (click)="goToPage(pageNumber + 1)"
+        [disabled]="pageNumber === totalPages">Next</button>
     </div>
   </div>
-  @if(students && students.length!=0){
-  <table class="table table-bordered table-striped">
-    <thead>
-      <tr>
-        <th>
+ 
+    <!-- The Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+      [style]="{'display':ismodelshow()?'block':'none'}">
+      <div class="modal-dialog" style="max-width: 50vw;">
+        <div class="modal-content">
+          <div class="modal-header">
 
-          <input [(ngModel)]="searchName" type="text" placeholder="Search by Name" />
-        </th>
+            @if(isEditMode)
+            {<h4 class="modal-title fs-5" id="exampleModalLabel">Update Student Details</h4>
+            }
+            @else{<h4 class="modal-title fs-5" id="exampleModalLabel">Add Student Details</h4>}
+            <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="closeModel()"></button>
+          </div> <form #form="ngForm" (ngSubmit)="onsubmit(form)">
+          <div class="modal-body">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label"> First Name:
+                </label>
 
-
-        <th>
-          <!-- <input [(ngModel)]="searchDOB" type="text" placeholder="Search by DOB" /> -->
-
-        </th>
-        <th>
-          <input [(ngModel)]="searchEmail" type="text" placeholder="Search by Email" />
-
-        </th>
-        <th class="text-center"> <button (click)="onSearch()">Search</button></th>
-      </tr>
-      <tr>
-        <th>
-          Student Name
-        </th>
-
-
-        <th>
-          Date of Birth
-        </th>
-        <th>
-          Email
-        </th>
-        <th>
-          Addresses
-        </th>
-        <th class="text-center">Status</th>
-      </tr>
-
-    </thead>
-    <tbody>@for(student of students;track $index) {<tr>
-        <td>{{student.firstName}}{{student.lastName}}</td>
-
-
-        <td>{{student.dateOfBirth}}</td>
-        <td>{{student.email}}</td>
-        <td>
-          <ul>
-            <li *ngFor="let addr of student.addresses">
-              {{ addr.addressline1 }}, {{ addr.city }}, {{ addr.state }} ({{ addr.country.countryName }})
-            </li>
-          </ul>
-        </td>
-        <!-- (click)="OnDelete(student.id)"   -->
-        <td class="text-center">
-          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal"
-            (click)="OnEdit(student.studentId)">Edit</button>
-          <button class="btn btn-danger" (click)="deleteStudent(student.studentId)">Delete</button>
-        </td>
-      </tr>}
-    </tbody>
-  </table>}
-  @else{
-  <h5>Student not found</h5>
-  } 
-  
-  
-  <div class="pagination">
-    <!-- <button (click)="prevPage()"  [disabled]="pageNumber === 1">Previous</button>
-    <span>Page {{ pageNumber }} of {{ getTotalPages()}}</span>
-    <button (click)="onPageChange(pageNumber + 1)" [disabled]="pageNumber * pageSize >= totalCount">Next</button> -->
-
-
-
-    <button (click)="goToPage(pageNumber - 1)" [disabled]="pageNumber === 1">Previous</button>
-  Page {{ pageNumber }} of {{ totalPages }}
-  <button (click)="goToPage(pageNumber + 1)" [disabled]="pageNumber === totalPages">Next</button>
-
-
-
-  </div>
-  <!-- The Modal -->
-  <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
-    [style]="{'display':ismodelshow()?'block':'none'}">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-
-          @if(isEditMode)
-          {<h4 class="modal-title fs-5" id="exampleModalLabel">Update Student Details</h4>
-          }
-          @else{<h4 class="modal-title fs-5" id="exampleModalLabel">Add Student Details</h4>}
-
-
-
-          <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="closeModel()"></button>
-        </div>
-        <!-- Modal body -->
-        <div class="modal-body">
-
-
-          <div  class="mb-3">
-            <label for="firstName" class="col-form-label"> First Name::
-           
-             
-              <input name="firstName" [(ngModel)]="student.firstName" required />
-            </label>
-
-          </div>
-          <div  class="mb-3">
-            <label class="col-form-label">
-              Last Name:
-              <input name="lastName" [(ngModel)]="student.lastName" required />
-            </label>
-          </div>
-          <div  class="mb-3">
-            <label class="col-form-label">
-              Email:
-              <input name="email" [(ngModel)]="student.email" required />
-            </label>
-          </div>
-          <div  class="mb-3">
-            <label class="col-form-label">
-              Date Of Birth:
-              <!-- <p-calendar [(ngModel)]="student.dateOfBirth" dateFormat="yy-mm-dd" showIcon="true"></p-calendar> -->
-
-              
-              <input type="date" id="dateOfBirth" [(ngModel)]="student.dateOfBirth" name="dateOfBirth" required
-                class="form-control">
-
-              <!-- <mat-form-field appearance="fill">
-
-                <input style="width: auto;height: auto;" matInput [matDatepicker]="picker"
-                  [(ngModel)]="student.dateOfBirth" [max]="maxDate" />
-                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-                <mat-datepicker #picker></mat-datepicker>
-              </mat-form-field> -->
-              <!-- <input name="dateOfBirth" [(ngModel)]="student.dateOfBirth" required /> -->
-            </label>
-          </div>
-          <div  class="mb-3">
-            <label class="col-form-label"> Class:
-              <select id="classes" [(ngModel)]="selectedClassId" name="classes" required>
-                <option value="" disabled selected>Select Class</option>
-                <option *ngFor="let class of classes" [value]="class.id">
-                  {{ class.className }}
-                </option>
-              </select> </label>
-          </div>
-          <div class="tabs-container">
-            <ul class="tabs">
-              <li [class.active]="selectedTab === 'correspondance'" (click)="selectTab('correspondance')">
-                Correspondance</li>
-              <li [class.active]="selectedTab === 'permanent'" (click)="selectTab('permanent')">Permanent</li>
-              <li [class.active]="selectedTab === 'school'" (click)="selectTab('school')">School</li>
-
-            </ul>
-
-            <div *ngIf="selectedTab === 'correspondance'">
-              <h3>Correspondance Address</h3>
-              <input type="hidden" [(ngModel)]="correspondanceAddress.addressCategoryId" />
-              <input id="correspondanceAddressline1" placeholder="Address Line1" type="text"
-                [(ngModel)]="correspondanceAddress.addressline1" name="addressline1" required>
-              <input id="correspondanceAddressline2" placeholder="Address Line2" type="text"
-                [(ngModel)]="correspondanceAddress.addressline2" name="addressline2" required>
-              <input id="correspondanceAddressline3" placeholder="Address Line3" type="text"
-                [(ngModel)]="correspondanceAddress.addressline3" name="addressline3" required>
-              <input id="city" type="text" placeholder="City" [(ngModel)]="correspondanceAddress.city" name="city"
-                required>
-              <input placeholder="State" id="state" type="text" [(ngModel)]="correspondanceAddress.state" name="state"
-                required>
-              <select id="country" type="number" 
-                [(ngModel)]="correspondanceAddress.countryId" name="country" required>
-                <option value="0" disabled selected>Select Country</option>
-                <option *ngFor="let country of countries" [value]="country.id">
-                  {{ country.countryName }}
-                </option>
-              </select>
-              <input type="text" placeholder="Postal Code" id="postalcode"
-                [(ngModel)]="correspondanceAddress.postalCode" name="postalcode" required /><br />
-              <!-- <button (click)="addAddress('correspondance')">Add Correspondance Address</button> -->
-
+                <input class="form-control" [(ngModel)]="student.firstName" name="firstName" required
+                  pattern="^[a-zA-Z\s]+$" #firstName="ngModel" />
+                <div *ngIf="firstName.touched && firstName.invalid" class="text-danger">
+                  <div *ngIf="firstName.errors?.['required']">First name is required.</div>
+                  <div *ngIf="firstName.errors?.['pattern']">
+                    Only letters and spaces are allowed.
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  Last Name:
+                </label>
+                <input name="lastName" class="form-control" [(ngModel)]="student.lastName" required
+                  pattern="^[a-zA-Z\s]+$" #lastName="ngModel" />
+                <div *ngIf="lastName.touched && lastName.invalid" class="text-danger">
+                  <div *ngIf="lastName.errors?.['required']">Last name is required.</div>
+                  <div *ngIf="lastName.errors?.['pattern']">
+                    Only letters and spaces are allowed.
+                  </div>
+                </div>               
+              </div>
             </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">
+                  Email:
+                </label> <input type="email" name="email" class="form-control" [(ngModel)]="student.email" required
+                  email #email="ngModel" />
+                <div *ngIf="email.invalid && email.touched" class="text-danger">
+                  <div *ngIf="email.errors?.['required']">Email is required.</div>
+                  <div *ngIf="email.errors?.['email']">Please enter a valid email address.</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  Date Of Birth:
+                </label>
+                <input type="date" [(ngModel)]="formattedDateOfBirth" #dobCtrl="ngModel" name="DateOfBirth"
+                  class="form-control" required (ngModelChange)="validateDateOfBirth($event)" />
+                <div *ngIf="invalidDate">Year must be 1900 or later.</div>
+                <div *ngIf="dobCtrl.invalid && dobCtrl.touched" class="text-danger">
+                  <small *ngIf="dobCtrl.errors?.['required']">Date of birth is required.</small>
+                  <small *ngIf="dobError === 'future'">Date of birth cannot be in the future.</small>
+                  <small *ngIf="dobError === 'invalidChars'">Date format is invalid or contains special
+                    characters.</small>
+                </div>
+                <div *ngIf="dobError" class="text-danger">
+                  <div *ngIf="dobError === 'invalidChars'">Invalid format. Use dd-mm-yyyy.</div>
+                  <div *ngIf="dobError === 'future'">Date of birth cannot be in the future.</div>
+                </div>       
 
-            <div *ngIf="selectedTab === 'permanent'">
-              <h3>Permanent Address</h3>
-              <input type="hidden" [(ngModel)]="permanentAddress.addressCategoryId" />
-              <input id="address" placeholder="Address Line1" type="text" [(ngModel)]="permanentAddress.addressline1"
-                name="addressline1" required>
-              <input id="address" placeholder="Address Line2" type="text" [(ngModel)]="permanentAddress.addressline2"
-                name="addressline2" required>
-              <input id="address" placeholder="Address Line3" type="text" [(ngModel)]="permanentAddress.addressline3"
-                name="addressline3" required>
-              <input id="city" type="text" placeholder="City" [(ngModel)]="permanentAddress.city" name="city" required>
-              <input placeholder="State" id="state" type="text" [(ngModel)]="permanentAddress.state" name="state"
-                required>
-
-              <select id="country" [(ngModel)]="permanentAddress.countryId" name="country" required>
-                <option value="0" disabled selected>Select Country</option>
-                <option *ngFor="let country of countries" [value]="country.id">
-                  {{ country.countryName }}
-                </option>
-              </select>
-              <input type="text" placeholder="Postal Code" id="postalcode" [(ngModel)]="permanentAddress.postalCode"
-                name="postalcode" required /><br />
-              <!-- <button (click)="addAddress('permanent')">Add Permanent Address</button> -->
+                <div *ngIf="formattedDateOfBirth && isFutureDate(formattedDateOfBirth)" class="text-danger">
+                  Date of birth cannot be in the future.
+                </div>
+              </div>
             </div>
-            <div *ngIf="selectedTab === 'school'">
-              <h3>School Address</h3>
-              <input type="hidden" [(ngModel)]="schoolAddress.addressCategoryId" />
-              <input id="address" placeholder="Address Line1" type="text" [(ngModel)]="schoolAddress.addressline1"
-                name="addressline1" required>
-              <input id="address" placeholder="Address Line2" type="text" [(ngModel)]="schoolAddress.addressline2"
-                name="addressline2" required>
-              <input id="address" placeholder="Address Line3" type="text" [(ngModel)]="schoolAddress.addressline3"
-                name="addressline3" required>
-              <input id="city" type="text" placeholder="City" [(ngModel)]="schoolAddress.city" name="city" required>
-              <input placeholder="State" id="state" type="text" [(ngModel)]="schoolAddress.state" name="state" required>
+            <div class="row mb-3">
+              <div class="col-md-12">
+                <label class="form-label"> Class:
+                </label>
+                <select class="form-control" [(ngModel)]="selectedClassId"  #classSelect="ngModel"
+                  name="studentclass">
+                  <option value="" disabled selected>Select Class</option>
+                  <option *ngFor="let class of classes" [value]="class.id">
+                    {{ class.className }}
+                  </option>
+                </select>
 
-              <select id="country" type="number" [(ngModel)]="schoolAddress.countryId" name="country" required>
-                <option value="0" disabled selected>Select Country</option>
-                <option *ngFor="let country of countries" [value]="country.id">
-                  {{ country.countryName }}
-                </option>
-              </select>
-              <input type="text" placeholder="Postal Code" id="postalcode" [(ngModel)]="schoolAddress.postalCode"
-                name="postalcode" required /><br />
-              <!-- <button (click)="addAddress('school')">Add School Address</button> -->
-
+                <div *ngIf="classSelect.invalid && classSelect.touched" class="text-danger">
+                  Please select a class.
+                </div>
+              </div>
             </div>
+            <div class="row g-3">
+              <div class="col-md-12">
+                <ul class="nav nav-pills nav-justified" id="addressTabs" role="tablist">
+                  <li class="nav-item">
+                    <button class="nav-link active" id="correspondance-tab" data-bs-toggle="tab"
+                      data-bs-target="#correspondance" type="button" role="tab">Correspondence</button>
+                  </li>
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="permanent-tab" data-bs-toggle="tab" data-bs-target="#permanent"
+                      type="button" role="tab">Permanent</button>
+                  </li>
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="school-tab" data-bs-toggle="tab" data-bs-target="#school" type="button"
+                      role="tab">School</button>
+                  </li>
+                </ul>
+                <div class="tab-content border border-top-0 p-3 bg-light" id="addressTabContent">
+                  <div class="tab-pane fade show active" id="correspondance" role="tabpanel">
+
+                    <h6 class="fw-bold mb-3">Correspondence Address</h6>
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">Address Line 1:
+                        </label> <input type="hidden" name="caddressCategoryId"
+                          [(ngModel)]="correspondanceAddress.addressCategoryId" />
+
+                        <input class="form-control" id="correspondanceAddressline1" placeholder="Address Line 1"
+                          name="correspondanceAddressline1" type="text" [(ngModel)]="correspondanceAddress.addressline1"
+                          #caddressLine1="ngModel" required minlength="5" maxlength="100"
+                          pattern="^[a-zA-Z0-9\s,.-]+$" />
+                        <div *ngIf="caddressLine1.touched && caddressLine1.invalid" class="text-danger">
+
+                          <div *ngIf="caddressLine1.errors?.['minlength']">Minimum 5 characters required.</div>
+                          <div *ngIf="caddressLine1.errors?.['maxlength']">Maximum 100 characters allowed.</div>
+                          <div *ngIf="caddressLine1.errors?.['pattern']">Only letters, numbers, and common punctuation
+                            allowed.</div>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Address Line 2:
+                        </label>
+                          <input class="form-control" id="correspondanceAddressline2" placeholder="Address Line 2"
+                          name="correspondanceAddressline2" type="text" [(ngModel)]="correspondanceAddress.addressline2"
+                          #caddressLine2="ngModel"  minlength="5" maxlength="15"
+                          pattern="^[a-zA-Z0-9\s,.-]+$" />
+                        <div *ngIf="caddressLine2.touched && caddressLine2.invalid" class="text-danger">
+                          <div *ngIf="caddressLine2.errors?.['minlength']">Minimum 5 characters required.</div>
+                          <div *ngIf="caddressLine2.errors?.['maxlength']">Maximum 15 characters allowed.</div>
+                          <div *ngIf="caddressLine2.errors?.['pattern']">Only letters, numbers, and common punctuation
+                            allowed.</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">Address Line 3:
+                        </label>  <input class="form-control" id="correspondanceAddressline3" placeholder="Address Line 3"
+                        name="correspondanceAddressline3" type="text" [(ngModel)]="correspondanceAddress.addressline3"
+                        #caddressLine3="ngModel" 
+                        pattern="^[a-zA-Z0-9\s,.-]+$" />
+                      <div *ngIf="caddressLine3.touched && caddressLine3.invalid" class="text-danger">
+                       
+                        <div *ngIf="caddressLine3.errors?.['pattern']">Only letters, numbers, and common punctuation
+                          allowed.</div>
+                      </div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">City:
+                        </label>
+                        <input class="form-control" id="city" type="text" placeholder="City" name="ccity"
+                          [(ngModel)]="correspondanceAddress.city" minlength="2" maxlength="50" pattern="^[a-zA-Z\s]+$"
+                          #ccity="ngModel" />
+
+                        <div *ngIf="ccity.invalid && ccity.touched" class="text-danger">
+                          <div *ngIf="ccity.errors?.['required']">City is required.</div>
+                          <div *ngIf="ccity.errors?.['minlength']">City must be at least 2 characters.</div>
+                          <div *ngIf="ccity.errors?.['maxlength']">City must be less than 50 characters.</div>
+                          <div *ngIf="ccity.errors?.['pattern']">Only letters and spaces are allowed.</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">State:
+                        </label>
+                        <input class="form-control" id="state" type="text" placeholder="State" name="cstate"
+                          [(ngModel)]="correspondanceAddress.state" minlength="2" maxlength="50" pattern="^[a-zA-Z\s]+$"
+                          #cstate="ngModel" />
+                        <div *ngIf="cstate.invalid && cstate.touched" class="text-danger">
+                          <div *ngIf="cstate.errors?.['required']">State is required.</div>
+                          <div *ngIf="cstate.errors?.['minlength']">State must be at least 2 characters long.</div>
+                          <div *ngIf="cstate.errors?.['maxlength']">State must be less than 50 characters.</div>
+                          <div *ngIf="cstate.errors?.['pattern']">Only letters and spaces are allowed in state.</div>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Country:
+                        </label><select class="form-control" id="country" type="number" name="ccountry"
+                          [(ngModel)]="correspondanceAddress.countryId">
+                          <option value="0" disabled selected>Select Country</option>
+                          <option *ngFor="let country of countries" [value]="country.id">
+                            {{ country.countryName }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col-md-6"> <label class="form-label">Postal Code:
+                        </label><input type="text" class="form-control" [(ngModel)]="correspondanceAddress.postalCode"
+                          name="ppostal" minlength="5" maxlength="6" pattern="^[0-9]{5,6}$" #cpostalCode="ngModel" />
+
+                        <div *ngIf="cpostalCode.invalid && cpostalCode.touched" class="text-danger">
+                          <div *ngIf="cpostalCode.errors?.['minlength']">Postal code is too short.</div>
+                          <div *ngIf="cpostalCode.errors?.['maxlength']">Postal code is too long.</div>
+                          <div *ngIf="cpostalCode.errors?.['pattern']">Only numbers are allowed (5-6 digits).</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="tab-pane fade" id="permanent" role="tabpanel" aria-labelledby="permanent-tab">
+                    <h6 class="fw-bold mb-3">Permanent Address</h6>
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">Address Line 1:
+                        </label><input type="hidden" [(ngModel)]="permanentAddress.addressCategoryId"
+                          name="paddressCategoryId" />                 
 
 
+                          <input class="form-control" id="permanentAddressline1" placeholder="Address Line 1"
+                        name="permanentAddressline1" type="text" [(ngModel)]="permanentAddress.addressline1"
+                        #paddressLine1="ngModel"  minlength="5" maxlength="100"
+                        pattern="^[a-zA-Z0-9\s,.-]+$" />
+                      <div *ngIf="paddressLine1.touched && paddressLine1.invalid" class="text-danger">
+                        <div *ngIf="paddressLine1.errors?.['minlength']">Minimum 5 characters required.</div>
+                        <div *ngIf="paddressLine1.errors?.['maxlength']">Maximum 100 characters allowed.</div>
+                        <div *ngIf="paddressLine1.errors?.['pattern']">Only letters, numbers, and common punctuation
+                          allowed.</div>
+                      </div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Address Line 2:
+                        </label> <input class="form-control" id="permanentAddressline2" placeholder="Address Line 2"
+                        name="permanentAddressline2" type="text" [(ngModel)]="permanentAddress.addressline2"
+                        #paddressLine2="ngModel"  minlength="5" maxlength="15"
+                        pattern="^[a-zA-Z0-9\s,.-]+$" />
+                      <div *ngIf="paddressLine2.touched && paddressLine2.invalid" class="text-danger">
+                        <div *ngIf="paddressLine2.errors?.['minlength']">Minimum 5 characters required.</div>
+                        <div *ngIf="paddressLine2.errors?.['maxlength']">Maximum 15 characters allowed.</div>
+                        <div *ngIf="paddressLine2.errors?.['pattern']">Only letters, numbers, and common punctuation
+                          allowed.</div>
+                      </div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">Address Line 3:
+                        </label>
+                          <input class="form-control" id="permanentAddressline3" placeholder="Address Line 3"
+                        name="permanentAddressline3" type="text" [(ngModel)]="permanentAddress.addressline3"
+                        #paddressLine3="ngModel" 
+                        pattern="^[a-zA-Z0-9\s,.-]+$" />
+                      <div *ngIf="paddressLine3.touched && paddressLine3.invalid" class="text-danger">
+                       
+                        <div *ngIf="paddressLine3.errors?.['pattern']">Only letters, numbers, and common punctuation
+                          allowed.</div>
+                      </div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">City:
+                        </label>
+                        <input class="form-control" id="city" type="text" placeholder="City" name="city"
+                          [(ngModel)]="permanentAddress.city" minlength="2" maxlength="15" pattern="^[a-zA-Z\s]+$"
+                          #city="ngModel" />
+                        <div *ngIf="city.invalid && city.touched" class="text-danger">
+                          <div *ngIf="city.errors?.['required']">City is required.</div>
+                          <div *ngIf="city.errors?.['minlength']">City must be at least 2 characters.</div>
+                          <div *ngIf="city.errors?.['maxlength']">City must be less than 15 characters.</div>
+                          <div *ngIf="city.errors?.['pattern']">Only letters and spaces are allowed.</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">State:
+                        </label><input class="form-control" id="state" type="text" placeholder="State" name="pstate"
+                          [(ngModel)]="permanentAddress.state" minlength="2" maxlength="50" pattern="^[a-zA-Z\s]+$"
+                          #pstate="ngModel" />
 
-            <!-- Repeat similarly for Return and Payee Tabs -->
+                        <div *ngIf="pstate.invalid && pstate.touched" class="text-danger">
+                          <div *ngIf="pstate.errors?.['required']">State is required.</div>
+                          <div *ngIf="pstate.errors?.['minlength']">State must be at least 2 characters long.</div>
+                          <div *ngIf="pstate.errors?.['maxlength']">State must be less than 50 characters.</div>
+                          <div *ngIf="pstate.errors?.['pattern']">Only letters and spaces are allowed in state.</div>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Country:
+                        </label> <select class="form-control" id="country" type="number" name="pcountry"
+                          [(ngModel)]="permanentAddress.countryId">
+                          <option value="0" disabled selected>Select Country</option>
+                          <option *ngFor="let country of countries" [value]="country.id">
+                            {{ country.countryName }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col-md-6"> <label class="form-label">Postal Code:
+                        </label>
+
+                        <input type="text" class="form-control" [(ngModel)]="permanentAddress.postalCode" name="ppostal"
+                          minlength="5" maxlength="6" pattern="^[0-9]{5,6}$" #ppostalCode="ngModel" />
+
+                        <div *ngIf="ppostalCode.invalid && ppostalCode.touched" class="text-danger">
+                          <div *ngIf="ppostalCode.errors?.['minlength']">Postal code is too short.</div>
+                          <div *ngIf="ppostalCode.errors?.['maxlength']">Postal code is too long.</div>
+                          <div *ngIf="ppostalCode.errors?.['pattern']">Only numbers are allowed (5-6 digits).</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="tab-pane fade" id="school" role="tabpanel">
+                    <h6 class="fw-bold mb-3">School Address</h6>
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">Address Line 1:
+
+                        </label> <input type="hidden" name="saddressCategoryId"
+                          [(ngModel)]="schoolAddress.addressCategoryId" />
+                        <input class="form-control" id="schoolAddressline1" placeholder="Address Line 1"
+                          name="schoolAddressline1" type="text" [(ngModel)]="schoolAddress.addressline1"
+                          #saddressLine1="ngModel"  minlength="5" maxlength="50"
+                          pattern="^[a-zA-Z0-9\s,.-]+$" />
+                        <div *ngIf="saddressLine1.touched && saddressLine1.invalid" class="text-danger">
+                          <div *ngIf="saddressLine1.errors?.['minlength']">Minimum 5 characters required.</div>
+                          <div *ngIf="saddressLine1.errors?.['maxlength']">Maximum 50 characters allowed.</div>
+                          <div *ngIf="saddressLine1.errors?.['pattern']">Only letters, numbers, and common punctuation
+                            allowed.</div>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Address Line 2:
+                        </label> 
+                        <input class="form-control" id="schoolAddressline2" placeholder="Address Line 2"
+                        name="schoolAddressline2" type="text" [(ngModel)]="schoolAddress.addressline2"
+                        #saddressLine2="ngModel"  minlength="5" maxlength="10"
+                        pattern="^[a-zA-Z0-9\s,.-]+$" />
+                      <div *ngIf="saddressLine2.touched && saddressLine2.invalid" class="text-danger">
+                        <div *ngIf="saddressLine2.errors?.['minlength']">Minimum 5 characters required.</div>
+                        <div *ngIf="saddressLine2.errors?.['maxlength']">Maximum 10 characters allowed.</div>
+                        <div *ngIf="saddressLine2.errors?.['pattern']">Only letters, numbers, and common punctuation
+                          allowed.</div>
+                      </div>
+
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">Address Line 3:
+                        </label> <input class="form-control" id="schoolAddressline3" placeholder="Address Line 3"
+                        name="schoolAddressline3" type="text" [(ngModel)]="schoolAddress.addressline3"
+                        #saddressLine3="ngModel"  
+                        pattern="^[a-zA-Z0-9\s,.-]+$" />
+                      <div *ngIf="saddressLine3.touched && saddressLine3.invalid" class="text-danger">
+                        
+                        <div *ngIf="saddressLine3.errors?.['pattern']">Only letters, numbers, and common punctuation
+                          allowed.</div>
+                      </div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">City:
+                        </label>
+                        <input class="form-control" id="city" type="text" placeholder="City" name="scity"
+                          [(ngModel)]="schoolAddress.city" minlength="2" maxlength="50" pattern="^[a-zA-Z\s]+$"
+                          #scity="ngModel" />
+
+                        <div *ngIf="scity.invalid && scity.touched" class="text-danger">
+                          <div *ngIf="scity.errors?.['required']">City is required.</div>
+                          <div *ngIf="scity.errors?.['minlength']">City must be at least 2 characters.</div>
+                          <div *ngIf="scity.errors?.['maxlength']">City must be less than 50 characters.</div>
+                          <div *ngIf="scity.errors?.['pattern']">Only letters and spaces are allowed.</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">State:
+                        </label>
+                        <input class="form-control" id="state" type="text" placeholder="State" name="sstate"
+                          [(ngModel)]="schoolAddress.state" minlength="2" maxlength="50" pattern="^[a-zA-Z\s]+$"
+                          #sstate="ngModel" />
+                        <div *ngIf="sstate.invalid && sstate.touched" class="text-danger">
+                          <div *ngIf="sstate.errors?.['required']">State is required.</div>
+                          <div *ngIf="sstate.errors?.['minlength']">State must be at least 2 characters long.</div>
+                          <div *ngIf="sstate.errors?.['maxlength']">State must be less than 50 characters.</div>
+                          <div *ngIf="sstate.errors?.['pattern']">Only letters and spaces are allowed in state.</div>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Country:
+                        </label> <select class="form-control" id="country" type="number"
+                          [(ngModel)]="schoolAddress.countryId" name="scountry">
+                          <option value="0" disabled selected>Select Country</option>
+                          <option *ngFor="let country of countries" [value]="country.id">
+                            {{ country.countryName }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+
+                      <div class="col-md-6"> <label class="form-label">Postal Code:
+                        </label>
+                        <input type="text" class="form-control" [(ngModel)]="schoolAddress.postalCode" name="spostal"
+                          minlength="5" maxlength="6" pattern="^[0-9]{5,6}$" #spostalCode="ngModel" />
+
+                        <div *ngIf="spostalCode.invalid && spostalCode.touched" class="text-danger">
+                          <div *ngIf="spostalCode.errors?.['minlength']">Postal code is too short.</div>
+                          <div *ngIf="spostalCode.errors?.['maxlength']">Postal code is too long.</div>
+                          <div *ngIf="spostalCode.errors?.['pattern']">Only numbers are allowed (5-6 digits).</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>  <div class="modal-footer border-0">
+            <button type="button" id="closeStudentBtn" class="btn btn-danger" data-bs-dismiss="modal"
+              (click)="closeModel()">Close</button>
+            @if(isEditMode){
+
+            <button type="submit" class="btn btn-primary"
+              [disabled]="form.invalid || dobCtrl.invalid || dobError">Update</button>
+
+            }@else{
+            <button type="submit" class="btn btn-primary"
+              [disabled]="form.invalid || (dobCtrl.invalid || dobError)">Save</button>
+            }
+
+          </div></form>
+         
+        </div>
+      </div>
+    </div>
+
+ 
+  <div class="modal fade" id="addressCategoryModal" tabindex="-1" aria-labelledby="addressCategoryModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm" style="max-width: 20vw;">
+      <div class="modal-content rounded-4 shadow border-0">
+        <form (ngSubmit)="AddAddressCategory()" #addresscategoryForm="ngForm" novalidate>        
+          <div class="modal-header border-bottom-0 d-flex justify-content-between align-items-start px-4 pt-4 pb-2">
+            <h5 class="modal-title fw-bold" id="addressCategoryModalLabel">Add Address Type</h5>
+            <button type="button" class="btn p-0 rounded-circle bg-light" style="width: 32px; height: 32px;"
+              aria-label="Close" data-bs-dismiss="modal" (click)="closeAddressModel(addresscategoryForm)">
+              <span class="text-dark fs-5 fw-bold">×</span>
+            </button>
+          </div>      
+          <div class="modal-body pt-1 px-4">
+            <label for="addressCategoryName" class="form-label fw-medium">Address Category Name</label>
+            <input type="text" id="addressCategoryName" name="addressCategoryName" class="form-control"
+              placeholder="e.g. Home, Office" [(ngModel)]="addressCategory.addressCategoryName" required
+              #addressCategoryName="ngModel" minlength="3" maxlength="15" pattern="^[a-zA-Z0-9]+$"
+              [ngClass]="{'is-invalid': addressCategoryName.invalid && addressCategoryName.touched}"
+              aria-describedby="addressCategoryHelp" />
+            <div *ngIf="addressCategoryName.touched && addressCategoryName.invalid" class="text-danger">
+              <div *ngIf="addressCategoryName.errors?.['minlength']">
+                Address Category Name must be at least 3 characters.
+              </div>
+              <div *ngIf="addressCategoryName.errors?.['maxlength']">
+                Address Category Name must be at most 15 characters.
+              </div>
+              <div *ngIf="addressCategoryName.errors?.['required']">Address Category Name is required.</div>
+              <div *ngIf="addressCategoryName.errors?.['pattern']">
+                Only letters and spaces are allowed.
+              </div>
+            </div>
+          </div>       
+          <div class="modal-footer border-top-0 px-4 pb-4 pt-2 d-flex justify-content-end gap-2">
+            <button type="submit" class="btn btn-primary" [disabled]="addresscategoryForm.invalid">
+              Save
+            </button>
+            <button type="button" class="btn btn-danger px-4" (click)="closeAddressModel(addresscategoryForm)" data-bs-dismiss="modal">
+              Close
+            </button>
           </div>
-        </div>
-        <!-- Modal footer -->
-        <div class="modal-footer">
-          @if(isEditMode){
-          <button type="submit" class="btn btn-primary" data-bs-dismiss="modal" (click)="onsubmit()">Update</button>
-
-          }@else{
-          <button type="submit" class="btn btn-primary" data-bs-dismiss="modal" (click)="onsubmit()">Save</button>
-          }
-
-          <button type="button" class="btn btn-danger" data-bs-dismiss="modal" (click)="closeModel()">Close</button>
-        </div>
-
+        </form>
       </div>
     </div>
   </div>
+  <div class="modal fade" id="classModal" tabindex="-1" aria-labelledby="classModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm" style="max-width: 20vw;">
+      <div class="modal-content rounded-4 shadow border-0">
+        <form (ngSubmit)="AddClasses()" #classForm="ngForm" novalidate>
+          <div class="modal-header border-bottom-0 d-flex justify-content-between align-items-start px-4 pt-4 pb-2">
+            <h5 class="modal-title fw-bold" id="classModalLabel">Add New Class</h5>
+            <button type="button" class="btn p-0 rounded-circle bg-light" style="width: 32px; height: 32px;"
+              aria-label="Close" data-bs-dismiss="modal" (click)="closeClassModel(classForm)">
+              <span class="text-dark fs-5 fw-bold">×</span>
+            </button>
+          </div>
+          <div class="modal-body pt-1 px-4">
+            <label for="className" class="form-label fw-medium">Class Name</label>
+            <input type="text" id="className" name="className" class="form-control" placeholder="e.g. I,II,III"
+              [(ngModel)]="studentClass.className" required #className="ngModel" minlength="1" maxlength="15"
+              pattern="^[a-zA-Z0-9]+$" [ngClass]="{'is-invalid': className.invalid && className.touched}" />
+
+
+            <div *ngIf="className.touched && className.invalid" class="text-danger">
+              <div *ngIf="className.errors?.['minlength']">
+                Class name must be at least 1 characters.
+              </div>
+              <div *ngIf="className.errors?.['maxlength']">
+                Class name must be at most 15 characters.
+              </div>
+              <div *ngIf="className.errors?.['required']">Class name is required.</div>
+              <div *ngIf="className.errors?.['pattern']">
+                Only letters and spaces are allowed.
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer border-top-0 px-4 pb-4 pt-2 d-flex justify-content-end gap-2">
+            <button type="submit" class="btn btn-primary" [disabled]="classForm.invalid">
+              Save
+            </button>
+            <button type="button" id="closeClassBtn" class="btn btn-danger px-4" (click)="closeClassModel(classForm)" data-bs-dismiss="modal">
+              Cancel
+            </button>
+          </div>

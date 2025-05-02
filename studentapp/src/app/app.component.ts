@@ -14,4 +14,8 @@ export class AppComponent {
   goToAddStudent() {
     this.router.navigate(['/student-details']);
   }
+  goToClasses() {
+    this.router.navigate(['/classes']);
+  }
+  
 }

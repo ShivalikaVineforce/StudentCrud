@@ -23,10 +23,26 @@ namespace studentdemo.Controllers
         [Route("AddClasses")]
         public async Task<ActionResult<StudentClass>> AddClasses(StudentClass classes)
         {
-            _context.StudentClasses.Add(classes);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetClasses), new { id = classes.Id }, classes);
+            try
+            {
+                if (await _context.StudentClasses.AnyAsync(c => c.ClassName == classes.ClassName))
+                {
+                    return BadRequest(new { message = "Class already exists." });
+
+                }
+
+                _context.StudentClasses.Add(classes);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction(nameof(GetClasses), new { id = classes.Id }, classes);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    message = ex.Message
+                });
+            }
         }
     }
-    }
+}
 

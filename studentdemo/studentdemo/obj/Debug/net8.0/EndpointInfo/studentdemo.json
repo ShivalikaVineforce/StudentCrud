@@ -43,6 +43,54 @@
         }
       }
     },
+    "/api/AddressCategory/AddAddressCategory": {
+      "post": {
+        "tags": [
+          "AddressCategory"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressCategory"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressCategory"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressCategory"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddressCategory"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddressCategory"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddressCategory"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Classes/GetClasses": {
       "get": {
         "tags": [
@@ -208,54 +256,6 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Country"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Students/Addstudent": {
-      "post": {
-        "tags": [
-          "Students"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Student"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Student"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/Student"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/Student"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Student"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Student"
                 }
               }
             }
@@ -450,14 +450,7 @@
         ],
         "parameters": [
           {
-            "name": "Name",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "Email",
+            "name": "searchTerm",
             "in": "query",
             "schema": {
               "type": "string"
@@ -477,6 +470,20 @@
             "schema": {
               "type": "integer",
               "format": "int32"
+            }
+          },
+          {
+            "name": "sortColumn",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortDirection",
+            "in": "query",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -666,6 +673,10 @@
         "additionalProperties": false
       },
       "Student": {
+        "required": [
+          "email",
+          "firstName"
+        ],
         "type": "object",
         "properties": {
           "studentId": {
@@ -673,19 +684,22 @@
             "format": "int32"
           },
           "firstName": {
-            "type": "string",
-            "nullable": true
+            "maxLength": 100,
+            "minLength": 3,
+            "type": "string"
           },
           "lastName": {
             "type": "string",
             "nullable": true
           },
           "email": {
+            "minLength": 1,
             "type": "string",
-            "nullable": true
+            "format": "email"
           },
           "dateOfBirth": {
             "type": "string",
+            "format": "date-time",
             "nullable": true
           },
           "classId": {

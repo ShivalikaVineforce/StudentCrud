@@ -13,10 +13,28 @@ namespace studentdemo.Controllers
 
         [HttpGet]
         [Route("GetAddressCategory")]
-        public async Task<ActionResult<List<AddressCategory>>> GetCategories() =>
+        public async Task<ActionResult<List<AddressCategory>>> GetAddressCategory() =>
             await _context.AddressCategory.ToListAsync();
 
+        [HttpPost]
+        [Route("AddAddressCategory")]
+        public async Task<ActionResult<AddressCategory>> AddClasses(AddressCategory addressCategory)
+        {
+            try {
+                if (await _context.AddressCategory.AnyAsync(c => c.AddressCategoryName == addressCategory.AddressCategoryName))
+                {
+                    return BadRequest(new { message = "Address Category Name already exists." });
+                }
 
+                _context.AddressCategory.Add(addressCategory);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction(nameof(GetAddressCategory), new { id = addressCategory.Id }, addressCategory);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
 
     }
 }

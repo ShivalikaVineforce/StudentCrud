@@ -13,7 +13,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { MyInterceptor } from './Services/MyInterceptor';
 //import { StudentFormComponent } from './Components/student-form/student-form.component';
 import { StudentDetailsComponent } from './Components/student-details/student-details.component';
-import { CalendarModule } from 'primeng/calendar';
+
 @NgModule({
   declarations: [
     AppComponent,StudentsComponent,StudentDetailsComponent
@@ -23,7 +23,7 @@ import { CalendarModule } from 'primeng/calendar';
     MatDatepickerModule,
     MatNativeDateModule, 
     BrowserModule,
-    FormsModule,CalendarModule,
+    FormsModule,
     HttpClientModule,
     AppRoutingModule,NgModule,
   ],

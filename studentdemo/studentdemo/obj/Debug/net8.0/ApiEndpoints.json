@@ -1,7 +1,33 @@
 [
   {
     "ContainingType": "studentdemo.Controllers.AddressCategoryController",
-    "Method": "GetCategories",
+    "Method": "AddClasses",
+    "RelativePath": "api/AddressCategory/AddAddressCategory",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "addressCategory",
+        "Type": "studentdemo.Models.AddressCategory",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "studentdemo.Models.AddressCategory",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "studentdemo.Controllers.AddressCategoryController",
+    "Method": "GetAddressCategory",
     "RelativePath": "api/AddressCategory/GetAddressCategory",
     "HttpMethod": "GET",
     "IsController": true,
@@ -139,32 +165,6 @@
   },
   {
     "ContainingType": "studentdemo.Controllers.Students",
-    "Method": "AddStudent",
-    "RelativePath": "api/Students/Addstudent",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "studentDto",
-        "Type": "studentdemo.Models.Student",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "studentdemo.Models.Student",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "studentdemo.Controllers.Students",
     "Method": "AddStudentsInfo",
     "RelativePath": "api/Students/AddStudentsInfo",
     "HttpMethod": "POST",
@@ -234,12 +234,7 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "Name",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "Email",
+        "Name": "searchTerm",
         "Type": "System.String",
         "IsRequired": false
       },
@@ -251,6 +246,16 @@
       {
         "Name": "PageSize",
         "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "sortColumn",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "sortDirection",
+        "Type": "System.String",
         "IsRequired": false
       }
     ],

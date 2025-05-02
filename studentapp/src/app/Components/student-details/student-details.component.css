@@ -227,9 +227,32 @@ body {
         border-top: var(--bs-modal-footer-border-width) solid var(--bs-modal-footer-border-color);
         border-bottom-right-radius: var(--bs-modal-inner-border-radius);
         border-bottom-left-radius: var(--bs-modal-inner-border-radius);
+    }html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    
+    .table-responsive {
+      height: 100%;
     }
     .modal-body {
         position: relative;
         flex: 1 1 auto;
         padding: var(--bs-modal-padding);
+    }.form-label {
+      font-weight: 500;
+    }
+    
+    input::placeholder,
+    select {
+      font-size: 0.95rem;
+    }.btn.btn-primary {
+      background-color: #0d6efd !important;
+      border-color: #0d6efd !important;
+    }
+    .btn.btn-danger {
+      background-color: #dc3545 !important;
+      border-color: #dc3545 !important;
     }

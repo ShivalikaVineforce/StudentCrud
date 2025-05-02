@@ -17,64 +17,38 @@ namespace studentdemo.Controllers
 
         public Students(AppDbContext context)
         {
-            try { _context = context; } 
-            catch(Exception ce) {
-            
-            
-            
-            }
-           
-        }
-
-        
-
-        [HttpPost("Addstudent")]
-        public async Task<ActionResult<Student>> AddStudent([FromBody] Student studentDto)
-        {
-
-
-            var student = new Student
-            {
-                FirstName = studentDto.FirstName,
-                LastName = studentDto.LastName,
-                Email = studentDto.FirstName,
-                ClassId = studentDto.ClassId,
-                DateOfBirth = studentDto.DateOfBirth
-            };
-
-            _context.Students.Add(student);
-            await _context.SaveChangesAsync();
-
-            foreach (var address in studentDto.Addresses)
+            try { _context = context; }
+            catch (Exception ce)
             {
 
 
-                address.StudentId = student.StudentId;
-                _context.Addresses.AddAsync(address);
+
             }
 
-
-            await _context.SaveChangesAsync();
-
-
-            return Ok();
         }
-
-        
-
-      
-
         [HttpPost("AddStudentsInfo")]
         public async Task<ActionResult<Student>> AddStudentsInfo([FromBody] Student student)
 
 
         {
             if (student == null)
-                return BadRequest("Student cannot be null.");
+                throw new UserFriendlyException("Student information is missing.");
 
 
             try
             {
+                if (student.DateOfBirth == default)
+                    throw new UserFriendlyException("Date of birth cannot be empty.");
+
+                if (string.IsNullOrWhiteSpace(student.FirstName))
+                    throw new UserFriendlyException("First name is required.");
+
+                if (string.IsNullOrWhiteSpace(student.LastName))
+                    throw new UserFriendlyException("Last name is required.");
+
+                if (student.ClassId == 0)
+                    throw new UserFriendlyException("Please select a class.");
+
                 var student1 = new Student
                 {
                     FirstName = student.FirstName,
@@ -84,43 +58,52 @@ namespace studentdemo.Controllers
                     DateOfBirth = student.DateOfBirth,
 
                     Addresses = new List<Address>()
-                        
-                 };
+
+                };
 
                 foreach (var addressDto in student.Addresses)
                 {
                     var address = new Address
                     {
-                        Addressline1 = addressDto.Addressline1, // Use dynamic address data
+                        Addressline1 = addressDto.Addressline1, 
                         Addressline2 = addressDto.Addressline2,
                         Addressline3 = addressDto.Addressline3,
                         City = addressDto.City,
                         State = addressDto.State,
                         PostalCode = addressDto.PostalCode,
-                        CountryId = addressDto.CountryId, // Use countryId dynamically fetched or passed
-                        AddressCategoryId = addressDto.AddressCategoryId // Use address category id fetched dynamically or passed
+                        CountryId = addressDto.CountryId, 
+                        AddressCategoryId = addressDto.AddressCategoryId 
                     };
 
-                    // Add the address to the student's address list
+                 
                     student1.Addresses.Add(address);
 
 
                 }
                 ;
+                if (!student1.Addresses.Any())
+                    throw new UserFriendlyException("Please provide at least one valid address.");
+
 
                 _context.Students.Add(student1);
                 await _context.SaveChangesAsync();
-
-                return Ok();
-                //return CreatedAtAction(nameof(AddStudentsInfo), new { id = student1.StudentId }, student1);
-
+               
+                return Ok(student1);
 
             }
-            catch (DbUpdateException ex)
+            catch (UserFriendlyException uex)
             {
-                Console.WriteLine("ERROR: " + ex.InnerException?.Message);
-                return StatusCode(500, "An error occurred while saving the student.");
-
+                return BadRequest(new { message = uex.Message });
+            }
+            catch (DbUpdateException dbex)
+            {
+                Console.WriteLine("DB ERROR: " + dbex.InnerException?.Message);
+                return StatusCode(500, new { message = "A database error occurred while saving the student." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("UNHANDLED: " + ex.Message);
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later." });
             }
         }
         [HttpGet("{id}")]
@@ -137,16 +120,37 @@ namespace studentdemo.Controllers
 
             return student;
         }
-       
 
 
-      
+
         [HttpPut("UpdateStudent")]
         public async Task<IActionResult> UpdateStudent([FromBody] Student studentDto)
         {
             try
             {
-                var existingStudent = await _context.Students
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+               
+
+                if (studentDto == null)
+                    throw new UserFriendlyException("Student data is missing.");
+
+                if (studentDto.DateOfBirth == default)
+                    throw new UserFriendlyException("Date of birth cannot be empty.");
+
+                if (string.IsNullOrWhiteSpace(studentDto.FirstName))
+                    throw new UserFriendlyException("First name is required.");
+
+                if (string.IsNullOrWhiteSpace(studentDto.LastName))
+                    throw new UserFriendlyException("Last name is required.");
+
+                if (studentDto.ClassId == 0)
+                    throw new UserFriendlyException("Please select a class.");
+
+
+               var  existingStudent = await _context.Students
                     .Include(s => s.Addresses)
                     .FirstOrDefaultAsync(s => s.StudentId == studentDto.StudentId);
 
@@ -160,19 +164,19 @@ namespace studentdemo.Controllers
                 existingStudent.DateOfBirth = studentDto.DateOfBirth;
                 existingStudent.ClassId = studentDto.ClassId;
 
-                // === Remove old addresses safely ===
+               
                 if (existingStudent.Addresses != null && existingStudent.Addresses.Any())
                 {
                     _context.Addresses.RemoveRange(existingStudent.Addresses);
                     await _context.SaveChangesAsync(); // Ensure they are removed from the tracking
                 }
 
-                // === Add new addresses ===
+              
                 var newAddresses = new List<Address>();
                 foreach (var addr in studentDto.Addresses)
                 {
-                    // Detach navigation props to avoid tracking issues
-                    addr.Id = 0; // Treat it as a new record
+                   
+                    addr.Id = 0;
                     addr.StudentId = existingStudent.StudentId;
                     addr.Student = null;
                     addr.Country = null;
@@ -180,16 +184,27 @@ namespace studentdemo.Controllers
 
                     newAddresses.Add(addr);
                 }
+                if (!newAddresses.Any())
+                    throw new UserFriendlyException("Please provide at least one valid address.");
 
                 existingStudent.Addresses = newAddresses;
 
                 await _context.SaveChangesAsync();
                 return NoContent();
             }
-            catch (DbUpdateException ex)
+            catch (UserFriendlyException uex)
             {
-                Console.WriteLine("ERROR: " + ex.InnerException?.Message);
-                return StatusCode(500, "An error occurred while saving the student.");
+                return BadRequest(new { message = uex.Message });
+            }
+            catch (DbUpdateException dbex)
+            {
+                Console.WriteLine("DB ERROR: " + dbex.InnerException?.Message);
+                return StatusCode(500, new { message = "A database error occurred while updating the student." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("UNHANDLED ERROR: " + ex.Message);
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later." });
             }
         }
 
@@ -204,7 +219,7 @@ namespace studentdemo.Controllers
             if (student == null)
                 return NotFound();
 
-            _context.Students.Remove(student); // EF will also delete related Addresses
+            _context.Students.Remove(student); 
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -223,104 +238,83 @@ namespace studentdemo.Controllers
             return Ok(students);
         }
 
-        //[HttpGet("GetStudentsSearch")]
-        //public async Task<IActionResult> GetStudents([FromQuery] StudentQueryParameters queryParams)
-        //{
-        //    var query = _context.Students
-        //        .Include(s => s.Addresses)
-        //        .AsQueryable();
-
-        //    // Filter by SearchTerm
-        //    if (!string.IsNullOrWhiteSpace(queryParams.SearchTerm))
-        //    {
-        //        string searchTerm = queryParams.SearchTerm.ToLower();
-        //        query = query.Where(s =>
-        //            s.FirstName.ToLower().Contains(searchTerm) ||
-        //            s.LastName.ToLower().Contains(searchTerm) ||
-        //            s.Email.ToLower().Contains(searchTerm));
-        //    }
-
-        //    // Total count before pagination (for frontend pagination controls)
-        //    var totalCount = await query.CountAsync();
-
-        //    // Apply pagination
-        //    var students = await query
-        //        .OrderBy(s => s.FirstName) // Optional: for consistent ordering
-        //        .Skip((queryParams.PageNumber - 1) * queryParams.PageSize)
-        //        .Take(queryParams.PageSize)
-        //        .ToListAsync();
-
-        //    // Create DTOs
-        //    //var result = students.Select(s => new StudentDto
-        //    //{
-        //    //    Student = s
-        //    //   // Addresses = s.Addresses ?? new List<Address>()
-        //    //}).ToList();
-
-        //    return Ok(new
-        //    {
-        //        TotalCount = totalCount,
-        //        PageNumber = queryParams.PageNumber,
-        //        PageSize = queryParams.PageSize,
-        //        //
-        //      //  Students = result
-        //        Students = students
-        //    });
-        //}
         [HttpGet("GetStudentsSearch")]
         public async Task<IActionResult> GetStudents([FromQuery] StudentQueryParameters queryParams)
         {
             var query = _context.Students
+                .Include(s => s.Class)
                 .Include(s => s.Addresses)
+                    .ThenInclude(a => a.Country)
+                .Include(s => s.Addresses)
+                    .ThenInclude(a => a.AddressCategory)
                 .AsQueryable();
 
-            // Filter by SearchTerm
-
-            // Filter by name (first or last)
-            if (!string.IsNullOrWhiteSpace(queryParams.Name))
+            // Search
+            if (!string.IsNullOrWhiteSpace(queryParams.searchTerm))
             {
-                var name = queryParams.Name.ToLower();
+                var name = queryParams.searchTerm.ToLower();
                 query = query.Where(s =>
                     s.FirstName.ToLower().Contains(name) ||
-                    s.LastName.ToLower().Contains(name));
+                    s.LastName.ToLower().Contains(name) ||
+                    s.Email.ToLower().Contains(name));
             }
 
-            // Filter by email
-            if (!string.IsNullOrWhiteSpace(queryParams.Email))
+            // Sorting
+            if (!string.IsNullOrEmpty(queryParams.sortColumn))
             {
-                var email = queryParams.Email.ToLower();
-                query = query.Where(s => s.Email.ToLower().Contains(email));
+                bool ascending = queryParams.sortDirection?.ToLower() != "desc";
+
+                query = queryParams.sortColumn.ToLower() switch
+                {
+                    "firstname" => ascending ? query.OrderBy(s => s.FirstName) : query.OrderByDescending(s => s.FirstName),
+                    "lastname" => ascending ? query.OrderBy(s => s.LastName) : query.OrderByDescending(s => s.LastName),
+                    "email" => ascending ? query.OrderBy(s => s.Email) : query.OrderByDescending(s => s.Email),
+                    "dateofbirth" => ascending ? query.OrderBy(s => s.DateOfBirth) : query.OrderByDescending(s => s.DateOfBirth),
+                    _ => query.OrderBy(s => s.FirstName)
+                };
+            }
+            else
+            {
+               
+                query = query.OrderByDescending(s => s.StudentId);
             }
 
-            // Total count before pagination (for frontend pagination controls)
             var totalCount = await query.CountAsync();
 
-            // Apply pagination
             var students = await query
-                .OrderBy(s => s.FirstName) // Optional: for consistent ordering
                 .Skip((queryParams.PageNumber - 1) * queryParams.PageSize)
                 .Take(queryParams.PageSize)
+                .Select(s => new StudentDataDto
+                {
+                    StudentId = s.StudentId,
+                    FullName = s.FirstName + " " + s.LastName,
+                    FirstName = s.FirstName,
+                    LastName = s.LastName,
+                    Email = s.Email,
+                    DateOfBirth = s.DateOfBirth,
+                    ClassName = s.Class.ClassName,
+                    Addresses = s.Addresses.Select(a => new StudentAddressDto
+                    {
+                        Addressline1 = a.Addressline1,
+                        Addressline2 = a.Addressline2,
+                        Addressline3 = a.Addressline3,
+                        City = a.City,
+                        State = a.State,
+                        PostalCode = a.PostalCode,
+                        CountryName = a.Country.CountryName,
+                        AddressCategoryName = a.AddressCategory.AddressCategoryName
+                    }).ToList()
+                })
                 .ToListAsync();
-
-            // Create DTOs
-            //var result = students.Select(s => new StudentDto
-            //{
-            //    Student = s
-            //   // Addresses = s.Addresses ?? new List<Address>()
-            //}).ToList();
 
             return Ok(new
             {
                 TotalCount = totalCount,
                 PageNumber = queryParams.PageNumber,
                 PageSize = queryParams.PageSize,
-                //
-                //  Students = result
                 Students = students
             });
         }
-
-
 
         [HttpGet("StudentsInfo")]
         public async Task<ActionResult<IEnumerable<StudentDto>>> GetStudentsInfo(int studentId)

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Student, StudentDto } from '../Models/student.interface';
+import { Student } from '../Models/student.interface';
 import { StudentDetailsDto } from '../Models/StudentClassDto.model';
 
 interface PaginatedResult {
@@ -21,45 +21,28 @@ export class StudentService {
 
   constructor(private http: HttpClient) {}
 
-  // Method to save a student
-  saveStudent(student: StudentDto): Observable<StudentDto> {
-   
-    return this.http.post<StudentDto>(this.apiUrl+"/Addstudent", student);
-  }
-
   addStudent(student: Student): Observable<Student> {
-   
+   debugger;
+   console.log(student);
     return this.http.post<Student>(this.apiUrl+"/AddStudentsInfo", student);
   }
 
   getStudentsForEdit(studentid:number): Observable<StudentDetailsDto[]> {
    
     const params = new HttpParams().set('studentId', studentid);
-    //const headers = this.authService.createAuthHeaders();  
+    
     return this.http.get<StudentDetailsDto[]>(this.apiUrl+'/StudentsInfo',{params});
-  }
+  }  
 
-  // getStudents(): Observable<Student[]> {
-
-
-  //   return this.http.get<Student[]>(this.apiUrl+'/GetStudents');
-  // }
-
-  // getStudents(searchTerm: string, page: number, pageSize: number): Observable<any> {
-  //   let params = new HttpParams()
-  //     .set('SearchTerm', searchTerm)
-  //     .set('PageNumber', page)
-
-  //   return this.http.get<any>(this.apiUrl +'/GetStudentsSearch', { params });
-  // }
-
-  getStudents(name: string, email: string, pageNumber: number, pageSize: number): Observable<any> {
+  getStudents(name: string,  pageNumber: number, pageSize: number ,sortColumn: string, sortDirection: string): Observable<any> {
     let params = new HttpParams()
-      .set('Name', name || '')
-      .set('Email', email || '')
+      .set('searchTerm', name || '')
+      .set('sortColumn', sortColumn || '')
+      .set('sortDirection', sortDirection || '')     
       .set('PageNumber', pageNumber)
       .set('PageSize', pageSize);
-  
+
+  debugger;
     return this.http.get<any>(`${this.apiUrl}/GetStudentsSearch`, { params });
   }
 
@@ -74,7 +57,7 @@ export class StudentService {
 
 
   updateStudent(student: Student): Observable<void> {
-
+debugger;
     return this.http.put<void>(this.apiUrl + '/UpdateStudent', student);
   }
   deleteStudent(id: number): Observable<void> {
